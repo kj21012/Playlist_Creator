@@ -22,8 +22,6 @@ class Song():
         self.album = album
         self.title = title
         
-        self.track_number = load_file(song_path)['tracknumber'].value
-
     def __str__(self):
         return f'{self.path}\n{self.artist} - {self.album} - {self.track_number}. {self.title}'
     
@@ -55,13 +53,15 @@ class Playlist():
         
         self.table_name = 'Songs'
         
-        
         self.db = db()
+        try:
+            self.db = db(params['db_name'])
+        except:
+            pass
         
-        self.keys = ['track_number', 'path', 'artist', 'album', 'title' ]
-        text_types = ['text' for i in range(4)]
-        self.types = ['integer']
-        self.types.extend(text_types)
+        
+        self.keys = [ 'path', 'artist', 'album', 'title' ]
+        self.types = ['text' for i in range(4)]
         
         self.db.create_table(self.table_name, self.keys, self.types)
         self.db.cur.execute('SELECT path FROM SONGS')
@@ -89,13 +89,13 @@ class Playlist():
         compare_songs = songs.copy()       
         
         for db_value, song_value in zip(self.in_db, compare_songs):
-            if db_value == song_value.path:
+            if db_value == str(song_value.song_path):
                 del(db_value)
                 del(song_value)              
         
         if not len(self.in_db) > 0:
         
-            values = [ (song.track_number, song.path, song.artist, song.album, song.title) for song in songs]
+            values = [ (str(song.song_path), song.artist, song.album, song.title) for song in songs]
             self.db.save_to_db('Songs', values)
     
     def get_all_artists(self):
@@ -149,4 +149,24 @@ class Playlist():
             return True 
         else:
             return False
+        
+
+if __name__ == "__main__":
+        test_kwargs = {'music_directory' : r'C:\Users\kjyeb\Documents\Liclipse Music Directory\Playlists Creator Test',
+    'playlist_folder' : r'C:\Users\kjyeb\Music\Generated_Playlists', 'include_extension' : ['mp3'],
+    'db_name' : 'library.db'}
+        def timer():
+            import time
+            start = time.time()
+            play = Playlist(test_kwargs)
+            end = time.time()
+            
+            print(end - start)
+            play.db.print_table('Songs')
+            
+        if os.path.exists(test_kwargs['db_name']):
+            os.remove(test_kwargs['db_name'], dir_fd=None)
+        
+        for i in range(3):
+            timer()
         
