@@ -20,6 +20,24 @@ class Song():
     def __str__(self):
         return f'{self.path}\n{self.artist} - {self.album} - {self.track_number}. {self.title}'
     
+    def __eq__(self, value):
+        
+        return self.song_path == value.song_path
+    
+    '''
+     object.__lt__(self, other)
+     object.__le__(self, other)
+     object.__eq__(self, other)
+     object.__ne__(self, other)
+     object.__gt__(self, other)
+     object.__ge__(self, other)
+    '''
+    def __lt__(self, other):
+        return self.__eq__(other)
+    def __hash__(self):
+        
+        return hash((self.song_path))
+    
 class Playlist():
     def __init__(self, params):
         '''
@@ -44,7 +62,6 @@ class Playlist():
             else:
                 setattr(self, var, list())
         
-        
         self.db = db()
         try:
             self.db = db(params['db_name'])
@@ -56,7 +73,7 @@ class Playlist():
         
         self.db.create_table(self.table_name, self.keys, self.types)
         self.db.cur.execute('SELECT path FROM Songs')
-        self.in_db = list(self.db.cur.fetchall())
+        self.songs_in_db = { Song(song_path[0]) : index for index, song_path in enumerate(self.db.cur.fetchall())}
         
         self.scan()
 
@@ -67,24 +84,17 @@ class Playlist():
                 for file in files:
                     extension = file.split('.')[1]
                     
-                    if not root in self.exclude_folder:
-                        if extension in self.include_extension:
-                            path = os.path.join(root, file)
-                            songs.append(path)
+                    if not root in self.exclude_folder and extension in self.include_extension:
+                        path = os.path.join(root, file)
+                        songs.append(path)
                             
-                            
-        songs = [Song(path) for path in songs]
-        compare_songs = songs.copy()       
+        songs = { Song(path) : index for index, path in enumerate(songs)}
         
-        for db_value, song_value in zip(self.in_db, compare_songs):
-            if db_value == str(song_value.song_path):
-                del(db_value)
-                del(song_value)              
+        diff = set(songs) - set(self.songs_in_db)
+        songs = list(sorted({ index : song for song, index in enumerate(diff)}))
         
-        if not len(self.in_db) > 0:
-        
-            values = [ (str(song.song_path), song.artist, song.album, song.title) for song in songs]
-            self.db.save_to_db('Songs', values)
+        values = [(str(song.song_path), song.artist, song.album, song.title) for song in songs]
+        self.db.save_to_db('Songs', values)
     
     def get_all_artists(self):
         
