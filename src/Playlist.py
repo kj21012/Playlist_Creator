@@ -1,23 +1,18 @@
 '''
 Created on Aug 18, 2021
 
-@author: kjyeb
+@author: Kwadwo Yeboah
 '''
 import os
 from pathlib import Path
-from pprint import pprint
-
-from music_tag import load_file
-
 from src.db_lite3 import db
-
 
 class Song():
     def __init__(self, song_path):
         self.song_path = Path(song_path)
         
         artist, album, title = Path(song_path).parts[-3:]
-        
+
         self.artist = artist
         self.album = album
         self.title = title
@@ -26,21 +21,19 @@ class Song():
         return f'{self.path}\n{self.artist} - {self.album} - {self.track_number}. {self.title}'
     
 class Playlist():
-   
     def __init__(self, params):
         '''
-        @param param: (dict)  
+        @param (dict) params: Paramaters for Playlist
+                            (str) music_directory -> path to music directory
+                            (str) playlist_folder -> Folder to 
         '''
         self.params = params
+        self.table_name = 'Songs'
          
-        if not params['music_directory']:
+        if not self.params['music_directory']:
             raise Exception('Music Directory path is empty')
-        
-        if not params['playlist_folder']:
-            params['playlist_folder'] = Path(os.getcwd(), 'Playlist_Folder')
-            
-        required_variables = { param : list() for param in ['include_extension', 'exclude_folder']}
 
+        required_variables = { param : list() for param in ['include_extension', 'exclude_folder']}
         
         required_variables.update(self.params)
         
@@ -51,7 +44,6 @@ class Playlist():
             else:
                 setattr(self, var, list())
         
-        self.table_name = 'Songs'
         
         self.db = db()
         try:
@@ -59,23 +51,19 @@ class Playlist():
         except:
             pass
         
-        
         self.keys = [ 'path', 'artist', 'album', 'title' ]
         self.types = ['text' for i in range(4)]
         
         self.db.create_table(self.table_name, self.keys, self.types)
-        self.db.cur.execute('SELECT path FROM SONGS')
+        self.db.cur.execute('SELECT path FROM Songs')
         self.in_db = list(self.db.cur.fetchall())
         
         self.scan()
 
-        
     def scan(self):
-
         songs = []
         for root, dirs, files in os.walk(self.music_directory):
             if files:
-
                 for file in files:
                     extension = file.split('.')[1]
                     
@@ -125,7 +113,7 @@ class Playlist():
     def generate_playlist(self, output_directory, playlist_name, song_path = '..', songs = []):
         '''
         @param (str) playlist_name
-        @param (str) playlist_folder - Defaults to relative directory unless absolute path is given
+        @param (str) output_directory - Defaults to relative directory unless absolute path is given
         @param (list(Song)) songs
         @return True on success
         '''
