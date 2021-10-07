@@ -64,8 +64,7 @@ class Playlist():
         self.types = ['text' for i in range(4)]
         
         self.db.create_table(self.table_name, self.keys, self.types)
-        self.db.cur.execute('SELECT path FROM Songs')
-        self.songs_in_db = { Song(song_path[0]) : index for index, song_path in enumerate(self.db.cur.fetchall())}
+        self.songs_in_db = { Song(song_path[0]) : index for index, song_path in enumerate(self.get_songs_in_db())}
         
         self.scan()
     
