@@ -24,18 +24,10 @@ class Song():
         
         return self.song_path == value.song_path
     
-    '''
-     object.__lt__(self, other)
-     object.__le__(self, other)
-     object.__eq__(self, other)
-     object.__ne__(self, other)
-     object.__gt__(self, other)
-     object.__ge__(self, other)
-    '''
     def __lt__(self, other):
         return self.__eq__(other)
     def __hash__(self):
-        
+    
         return hash((self.song_path))
     
 class Playlist():
@@ -76,7 +68,7 @@ class Playlist():
         self.songs_in_db = { Song(song_path[0]) : index for index, song_path in enumerate(self.db.cur.fetchall())}
         
         self.scan()
-
+    
     def scan(self):
         songs = []
         for root, dirs, files in os.walk(self.music_directory):
@@ -115,11 +107,15 @@ class Playlist():
         
         for album in albums:
             tup_album = (album,)
-            song_paths = self.db.cur.execute('SELECT path FROM SONGS WHERE album = ?', tup_album)
+            song_paths = self.db.cur.execute('SELECT path FROM Songs WHERE album = ?', tup_album)
             songs.extend(song_paths)
         
         return [Song(path[0]) for path in songs]
     
+    def get_songs_in_db(self):
+        self.db.cur.execute('SELECT path FROM Songs')
+        return list(self.db.cur.fetchall())
+        
     def generate_playlist(self, output_directory, playlist_name, song_path = '..', songs = []):
         '''
         @param (str) playlist_name
@@ -148,23 +144,4 @@ class Playlist():
         else:
             return False
         
-
-if __name__ == "__main__":
-        test_kwargs = {'music_directory' : r'C:\Users\kjyeb\Documents\Liclipse Music Directory\Playlists Creator Test',
-    'playlist_folder' : r'C:\Users\kjyeb\Music\Generated_Playlists', 'include_extension' : ['mp3'],
-    'db_name' : 'library.db'}
-        def timer():
-            import time
-            start = time.time()
-            play = Playlist(test_kwargs)
-            end = time.time()
-            
-            print(end - start)
-            play.db.print_table('Songs')
-            
-        if os.path.exists(test_kwargs['db_name']):
-            os.remove(test_kwargs['db_name'], dir_fd=None)
-        
-        for i in range(3):
-            timer()
         

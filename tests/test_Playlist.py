@@ -48,13 +48,9 @@ class Test(unittest.TestCase):
         for root, dirs, files in os.walk(play.music_directory):
             if files:
                 end.extend([ Song(Path(root,file)) for file in files])
-                
         
         ans = set( path for path in play.get_albums(albums))
         self.assertSetEqual( ans, set(end))
-    
-            
-
     
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.test_scan']
