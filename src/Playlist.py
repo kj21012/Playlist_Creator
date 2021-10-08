@@ -60,14 +60,15 @@ class Playlist():
         except:
             pass
         
-        self.keys = [ 'path', 'artist', 'album', 'title' ]
+        self.keys = ['path', 'artist', 'album', 'title']
         self.types = ['text' for i in range(4)]
         
         self.db.create_table(self.table_name, self.keys, self.types)
-        self.songs_in_db = { Song(song_path[0]) : index for index, song_path in enumerate(self.get_songs_in_db())}
         
-        self.scan()
-    
+        self.songs = self.scan()
+        self.new_songs = self.updated_db()
+        self.db.save_to_db('Songs', self.new_songs)
+        
     def scan(self):
         songs = []
         for root, dirs, files in os.walk(self.music_directory):
@@ -79,13 +80,21 @@ class Playlist():
                         path = os.path.join(root, file)
                         songs.append(path)
                             
-        songs = { Song(path) : index for index, path in enumerate(songs)}
+        return songs
+    
+    def get_songs_in_db(self):
+        self.db.cur.execute('SELECT path FROM Songs')
+        paths = list(self.db.cur.fetchall())
         
-        diff = set(songs) - set(self.songs_in_db)
-        songs = list(sorted({ index : song for song, index in enumerate(diff)}))
+        return { Song(song_path[0]) : index for index, song_path in enumerate(paths)}
+            
+    def updated_db(self):
+        songs = { Song(path) : index for index, path in enumerate(self.songs)}
         
-        values = [(str(song.song_path), song.artist, song.album, song.title) for song in songs]
-        self.db.save_to_db('Songs', values)
+        diff = set(songs) - set(self.get_songs_in_db())
+        sorted_difference = list(sorted({ index : song for song, index in enumerate(diff)}))
+        
+        return [(str(song.song_path), song.artist, song.album, song.title) for song in sorted_difference]
     
     def get_all_artists(self):
         
@@ -111,10 +120,7 @@ class Playlist():
         
         return [Song(path[0]) for path in songs]
     
-    def get_songs_in_db(self):
-        self.db.cur.execute('SELECT path FROM Songs')
-        return list(self.db.cur.fetchall())
-        
+    
     def generate_playlist(self, output_directory, playlist_name, song_path = '..', songs = []):
         '''
         @param (str) playlist_name

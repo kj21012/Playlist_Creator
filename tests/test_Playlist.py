@@ -4,6 +4,7 @@ Created on Aug 18, 2021
 @author: kjyeb
 '''
 import os
+import shutil
 from pathlib import Path
 from pprint import pprint
 import unittest
@@ -17,7 +18,21 @@ test_kwargs = {'music_directory' : r'C:\Users\kjyeb\Documents\Liclipse Music Dir
      
     
 class Test(unittest.TestCase):
-            
+     
+    def testDb_Delete(self):
+        play = Playlist(test_kwargs)
+        backup_song = list(play.get_songs_in_db().keys())[0]
+        
+        file_dst = r'C:\Users\kjyeb\Documents\Liclipse Music Directory\Backed up song.mp3'
+        shutil.copy2(backup_song.song_path, file_dst)
+        
+        os.remove(backup_song.song_path)
+        
+        self.assertTrue( backup_song not in set(play.scan()))
+        
+        if not os.path.exists(backup_song.song_path):
+            shutil.copy2(file_dst, backup_song.song_path)
+           
     def test_get_single_artist(self):
         test_artist = ['Yelawolf']
         play = Playlist(test_kwargs)
