@@ -21,15 +21,15 @@ class Song():
         return f'{self.path}\n{self.artist} - {self.album} - {self.track_number}. {self.title}'
     
     def __eq__(self, value):
-        
+    
         return self.song_path == value.song_path
     
     def __lt__(self, other):
         return self.__eq__(other)
+    
     def __hash__(self):
-    
         return hash((self.song_path))
-    
+
 class Playlist():
     def __init__(self, params):
         '''
@@ -91,7 +91,7 @@ class Playlist():
     def updated_db(self):
         songs = { Song(path) : index for index, path in enumerate(self.songs)}
         
-        diff = set(songs) - set(self.get_songs_in_db())
+        diff = songs.keys() - self.get_songs_in_db().keys()
         sorted_difference = list(sorted({ index : song for song, index in enumerate(diff)}))
         
         return [(str(song.song_path), song.artist, song.album, song.title) for song in sorted_difference]
